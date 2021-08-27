@@ -23,8 +23,8 @@ namespace CustomLocalization.Editor
         [MenuItem("GameObject/Lean/Back To Localisation %#l")]
         public static void BackToLocalisation()
         {
-            Selection.activeObject = TerminalLocalisation.localizationObject;
-            EditorGUIUtility.PingObject(TerminalLocalisation.localizationObject);
+            Selection.activeObject = Lean.Localization.LeanLocalization.Instances[0];
+            EditorGUIUtility.PingObject(Lean.Localization.LeanLocalization.Instances[0]);
         }
         void ReloadPhrases()
         {
@@ -48,23 +48,51 @@ namespace CustomLocalization.Editor
             //  ADD ENTRY
             if (addEntry)
             {
-                var phrase = Lean.Localization.LeanLocalization.AddPhraseToFirst("Entry_" + entryTitle);
-                ReloadPhrases();
+                string title = "Entry_" + entryTitle;
+                GameObject obj = Lean.Localization.LeanLocalization.Instances[0].gameObject;
+                Transform phraseTransform = obj.transform.Find(title);
+                Lean.Localization.LeanPhrase phrase;
+                if (phraseTransform == null)
+                {
+                    phrase = Lean.Localization.LeanLocalization.AddPhraseToFirst(title);
+                    phrase.Data = Lean.Localization.LeanPhrase.DataType.Object;
+                    phrase.gameObject.AddComponent<EntryLocalisation>().Init();
+                    ReloadPhrases();
 
-                Lean.Localization.LeanLocalization.UpdateTranslations();
+                    Lean.Localization.LeanLocalization.UpdateTranslations();
 
-                Selection.activeObject = phrase;
+                }
+                else
+                {
+                    phrase = phraseTransform.gameObject.GetComponent<Lean.Localization.LeanPhrase>();
+                    Debug.LogWarning("Translations list already contains this key.");
+                }
+                    Selection.activeObject = phrase.gameObject;
+                UnityEditorInternal.InternalEditorUtility.SetIsInspectorExpanded(phrase, false);
             }
 
             //  ADD PHRASE
             if (addMenuText)
             {
-                var phrase = Lean.Localization.LeanLocalization.AddPhraseToFirst("Phrase_" + menuText);
-                ReloadPhrases();
+                string title = "Phrase_" + menuText;
+                GameObject obj = Lean.Localization.LeanLocalization.Instances[0].gameObject;
+                Transform phraseTransform = obj.transform.Find(title);
+                Lean.Localization.LeanPhrase phrase;
+                if (phraseTransform == null)
+                {
+                    phrase = Lean.Localization.LeanLocalization.AddPhraseToFirst(title);
+                    ReloadPhrases();
 
-                Lean.Localization.LeanLocalization.UpdateTranslations();
+                    Lean.Localization.LeanLocalization.UpdateTranslations();
 
-                Selection.activeObject = phrase;
+                }
+                else
+                {
+                    phrase = phraseTransform.gameObject.GetComponent<Lean.Localization.LeanPhrase>();
+                    Debug.LogWarning("Translations list already contains this key.");
+                }
+                Selection.activeObject = phrase.gameObject;
+                UnityEditorInternal.InternalEditorUtility.SetIsInspectorExpanded(phrase, true);
             }
 
             showEntriesDropdown = EditorGUILayout.Foldout(showEntriesDropdown, "Entries list");

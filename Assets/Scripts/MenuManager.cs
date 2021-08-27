@@ -15,6 +15,8 @@ public class MenuManager : MonoBehaviour
     Dictionary<string, Menu> menus;
     List<string> menuStack;
 
+    List<Entry> entries;
+
     bool initMenus = true;
 
     public void generateMenus()
@@ -30,15 +32,15 @@ public class MenuManager : MonoBehaviour
         Menu main = new Menu(menuRenderer);
         menus.Add("main", main);
 
-        main.addSeparator("-");
-        main.addSpace();
         main.addText(getPhrase("main.terminalWelcome"));
+        main.addSeparator("-");
         main.addSpace();
         main.addText(getPhrase("main.selectEntries"));
         main.addSeparator("-");
-        main.addButton("1) " + getPhrase("main.emails_btn"), () => MenuManager.instance.switchMenu("mail"));
-        main.addButton("2) " + getPhrase("main.logs_btn"), () => MenuManager.instance.switchMenu("logs"));
-        main.addButton("0) " + getPhrase("main.exit_btn"), () => MenuManager.instance.exit());
+        main.addSpace();
+        main.addButton("1) " + getPhrase("main.emails_btn") + ".", () => MenuManager.instance.switchMenu("mail"));
+        main.addButton("2) " + getPhrase("main.logs_btn") + ".", () => MenuManager.instance.switchMenu("logs"));
+        main.addButton("0) " + getPhrase("main.exit_btn") + ".", () => MenuManager.instance.exit());
 
 
         /*if (initMenus) // only first time calling function
@@ -79,30 +81,37 @@ public class MenuManager : MonoBehaviour
         Menu logs = new Menu(menuRenderer);
         menus.Add("logs", logs);
 
-        // loading logs itselves        
+        // loading logs themselves        
+        entries = new List<Entry>();
+        foreach(var phrase in Lean.Localization.LeanLocalization.Instances[0].transform.GetComponentsInChildren<Lean.Localization.LeanPhrase>())
+        {
+            Lean.Localization.LeanPhrase.Entry entry = new Lean.Localization.LeanPhrase.Entry();
+            phrase.TryFindTranslation(Lean.Localization.LeanLocalization.Instances[0].CurrentLanguage, entry: ref entry);
+            if(entry != null && entry.Object != null)
+                entries.Add(entry.Object as Entry);
+        }
 
+        // creating log menus
         logs.addText(getPhrase("logs.header"));
         logs.addSeparator("-");
 
-        // creating log menus
         int iter = 0;
-        foreach (TerminalData.Document doc in MenuManager.instance.data.documents)
+        foreach (Entry ent in entries)
         {
             string key = "log-" + iter.ToString();
             menus.Add(key, new Menu(menuRenderer));
             Menu log = menus[key];
-            log.addText(doc.value);
+            log.addText(ent.value);
             log.addSeparator("-");
             log.addButton("0) " + getPhrase("button_back"), () => MenuManager.instance.back());
 
             // add link to logs menu
             Debug.Log(key);
-            logs.addButton((iter + 1).ToString() + ") " + doc.displayName, () => MenuManager.instance.switchMenu(key));
+            logs.addButton((iter + 1).ToString() + ") " + ent.title, () => MenuManager.instance.switchMenu(key));
 
             iter++;
         }
-        //
-
+        
         logs.addSpace();
         logs.addButton("0) " + getPhrase("button_back"), () => MenuManager.instance.back());
     }
@@ -165,6 +174,11 @@ public class MenuManager : MonoBehaviour
         }
     }
 
+    public void RedrawTopMenu()
+    {
+        menus[menuStack[menuStack.Count - 1]].Render();
+    }
+
     public void exit()
     {
         menuStack = new List<string>();
@@ -196,7 +210,7 @@ public class Menu
 
     void updateMenu()
     {
-        this.Render();
+        MenuManager.instance.RedrawTopMenu();
     }
 
     public void down()
