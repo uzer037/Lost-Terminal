@@ -1,53 +1,50 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "Translation", menuName = "ScriptableObjects/Translation/Translation", order = 2)]
-[System.Serializable]
-public class Translation : ScriptableObject
+[CreateAssetMenu(fileName = "TranslationData", menuName = "ScriptableObjects/Translation/TranslationData", order = 2)]
+public class TranslationData : ScriptableObject
 {
-    //TranslationFields
-    public int translationIndex;
-    public TranslationData.Language language;
-    public EditorData editorData;
-
     [System.Serializable]
-    public struct EditorData
+    public enum Language { English, Russian }
+    public static Dictionary<Language, string> languageNames = new Dictionary<Language, string> {
+        { Language.English, "en" },
+        { Language.Russian, "ru" }
+    };
+    public List<Translation> translations;
+    //private Dictionary<Language, Translation> _translations;
+    public Translation translation
     {
-        public string languageFullName;
+        get
+        {
+            Translation res = null;
+            if (translations != null && translations.Count > 0)
+            {
+                res = translations[1];
+                foreach (var trans in translations)
+                {
+                    if (trans.language == currentLanguage)
+                        res = trans;
+                }
+            }
+            else
+            {
+                if(translations != null)
+                    Debug.Log("Translation is null somehow... How surprising.");
+                else
+                    Debug.Log("Translations LIST is null somehow... How surprising.");
+            }
+            if (res == null)
+                Debug.LogError("Translation is somehow null!");
+            return res;
+        }
     }
-    public UI ui;
-    [System.Serializable]
-    public struct UI
+    //public TranslationData.Language defaultLanguage = Language.English;
+    public static TranslationData.Language fallbackLanguage = Language.English;
+    public static TranslationData.Language currentLanguage;
+    public void Reload()
     {
-        public string button_back;
-        public string button_ok;
-        public string button_cancel;
-        public Main main;
-
-        [System.Serializable]
-        public struct Main
-        {
-            public string terminalWelcome;
-            public string selectEntries;
-            public string emails_btn;
-            public string logs_btn;
-            public string exit_btn;
-        }
-        public Mail mail;
-
-        [System.Serializable]
-        public struct Mail
-        {
-            public string header;
-            public string mailCounter;
-        }
-        public Logs logs;
-
-        [System.Serializable]
-        public struct Logs
-        {
-            public string header;
-        }
+        Debug.Log("Gdmonin'");
+        //_translations = new Dictionary<Language, Translation>();
     }
 }

@@ -12,6 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 84b460a3846b81447a56383202888778, type: 3}
   m_Name: TerminalData
   m_EditorClassIdentifier: 
+  entries:
+  - {fileID: 11400000, guid: a2d3d5c7523dbf02ab63f9e5855084f5, type: 2}
+  - {fileID: 11400000, guid: d035ef7e85601c5aa8066f9be6141f73, type: 2}
   activeColor: {r: 1, g: 0.8769587, b: 0.8726415, a: 1}
   activeBGColor: {r: 0.40784317, g: 0.03137255, b: 0, a: 0.5019608}
   defaultColor: {r: 0.99607843, g: 0.7073845, b: 0.6972549, a: 1}
@@ -25,4 +28,4 @@ MonoBehaviour:
   PaddingV: 2
   version: v0.1 New World inc.
   header: New World Corporation Terminal
-  translationData: {fileID: 11400000, guid: 13dd7a4c58ddf144f8e991b021725a34, type: 2}
+  translationData: {fileID: 11400000, guid: b7e317e5b8fe7c92e8e17e566f55e30a, type: 2}

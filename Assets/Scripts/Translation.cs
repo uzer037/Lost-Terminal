@@ -1,37 +1,53 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "TranslationData", menuName = "ScriptableObjects/Translation/TranslationData", order = 2)]
-public class TranslationData : ScriptableObject
+[CreateAssetMenu(fileName = "Translation", menuName = "ScriptableObjects/Translation/Translation", order = 2)]
+[System.Serializable]
+public class Translation : ScriptableObject
 {
+    //TranslationFields
+    public int translationIndex;
+    public TranslationData.Language language;
+    public EditorData editorData;
+
     [System.Serializable]
-    public enum Language { Russian, English }
-    public static Dictionary<Language, string> languageNames = new Dictionary<Language, string> {
-        { Language.Russian, "ru" },
-        { Language.English, "en" }
-    };
-    public List<Translation> translations;
-    private Dictionary<Language, Translation> _translations;
-    public Translation translation
+    public struct EditorData
     {
-        get
-        {
-            Translation res = null;
-            foreach (var trans in translations)
-            {
-                if (trans.language == currentLanguage)
-                    res = trans;
-            }
-            return res;
-        }
+        public string languageFullName;
     }
-    //public TranslationData.Language defaultLanguage = Language.English;
-    public static TranslationData.Language fallbackLanguage = Language.English;
-    public static TranslationData.Language currentLanguage;
-    public void Reload()
+    public UI ui;
+    [System.Serializable]
+    public struct UI
     {
-        Debug.Log("Gdmonin'");
-        _translations = new Dictionary<Language, Translation>();
+        public string button_back;
+        public string button_ok;
+        public string button_cancel;
+        public Main main;
+
+        [System.Serializable]
+        public struct Main
+        {
+            public string terminalWelcome;
+            public string selectEntries;
+            public string emails_btn;
+            public string logs_btn;
+            public string exit_btn;
+        }
+        public Mail mail;
+
+        [System.Serializable]
+        public struct Mail
+        {
+            public string header;
+            public string mailCounter;
+        }
+        public Logs logs;
+
+        [System.Serializable]
+        public struct Logs
+        {
+            public string header;
+        }
     }
 }

@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f679f37793333454ea6d4e10d29f42ff, type: 3}
+  m_Script: {fileID: 11500000, guid: 5ec5be7899b1d5207961a1ac1b0bb6bc, type: 3}
   m_Name: TranslationData
   m_EditorClassIdentifier: 
   translations:
-  - {fileID: 11400000, guid: b7e317e5b8fe7c92e8e17e566f55e30a, type: 2}
   - {fileID: 11400000, guid: 54f35eb05cc59052f8985a6074feb25a, type: 2}
+  - {fileID: 11400000, guid: 13dd7a4c58ddf144f8e991b021725a34, type: 2}

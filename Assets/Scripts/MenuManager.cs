@@ -48,12 +48,12 @@ public class MenuManager : MonoBehaviour
             langSelect.addSpace();
 
             int n = 0;
-            foreach (TranslationData.Language lang in Enum.GetValues(typeof(TranslationData.Language)))
+            foreach (Translation transl in MenuManager.instance.data.translationData.translations)
             {
                 n++;
-                langSelect.addButton(n.ToString() + ") " + MenuManager.instance.data.translationData.translations[(int)lang].editorData.languageFullName, () =>
+                langSelect.addButton(n.ToString() + ") " + transl.editorData.languageFullName, () =>
                 {
-                    MenuManager.instance.data.setLanguage(lang);
+                    MenuManager.instance.data.setLanguage(transl.language);
                     tr = data.translationData.translation;
                     generateMenus();
                 });
@@ -112,7 +112,6 @@ public class MenuManager : MonoBehaviour
             Destroy(this);
 
         //  reloading entries
-        MenuManager.instance.data.updateLanguages();
         MenuManager.instance.data.updateEntries();
         generateMenus();
     }

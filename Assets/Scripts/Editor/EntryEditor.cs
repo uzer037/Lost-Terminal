@@ -15,7 +15,6 @@ public class EntryEditor : Editor
 
     void Init()
     {
-        //entries = new List<Entry>(Resources.LoadAll<Entry>("Entries"));
         langs = new List<string>();
         foreach(var key in TranslationData.languageNames.Keys)
         {

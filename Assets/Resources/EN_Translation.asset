@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: EN_Translation
   m_EditorClassIdentifier: Assembly-CSharp::Translation
   translationIndex: 0
-  language: 1
+  language: 0
   editorData:
     languageFullName: English
   ui:

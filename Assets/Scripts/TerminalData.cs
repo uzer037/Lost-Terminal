@@ -11,6 +11,8 @@ public class TerminalData : ScriptableObject
     //public List<TextAsset> documents;
     public List<Document> documents;
 
+    public List<Entry> entries;
+
     public Color activeColor;
     public Color activeBGColor;
     public Color defaultColor;
@@ -63,18 +65,12 @@ public class TerminalData : ScriptableObject
     public void setLanguage(TranslationData.Language lang)
     {
         TranslationData.currentLanguage = lang;
-        updateLanguages();
         updateEntries();
-    }
-    public void updateLanguages()
-    {
-        translationData.Reload();
     }
     public void updateEntries()
     {
         //load files
         documents = new List<Document>();
-        List <Entry> entries = new List<Entry>(Resources.LoadAll<Entry>("Entries"));
         foreach(var entry in entries)
         {
             documents.Add(new Document(entry));
