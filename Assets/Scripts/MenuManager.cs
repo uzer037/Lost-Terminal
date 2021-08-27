@@ -2,12 +2,16 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+
+[RequireComponent(typeof(TerminalRenderer))]
 public class MenuManager : MonoBehaviour
 {
+    Func<string, string> getPhrase = (string value) => Lean.Localization.LeanLocalization.GetTranslationText("Phrase_" + value, fallback: "ERR-NOT_FOUND");
+
     Menu currentMenu;
     public static MenuManager instance;
     public TerminalData data;
-    public TerminalRenderer menuRenderer;
+    TerminalRenderer menuRenderer;
     Dictionary<string, Menu> menus;
     List<string> menuStack;
 
@@ -15,7 +19,6 @@ public class MenuManager : MonoBehaviour
 
     public void generateMenus()
     {
-
         //  *   MENUS   *   //
         menus = new Dictionary<string, Menu>();
         menuStack = new List<string>();
@@ -23,22 +26,22 @@ public class MenuManager : MonoBehaviour
 
 
         //  **  MAIN    **  //
-        Translation tr = data.translationData.translation;
 
         Menu main = new Menu(menuRenderer);
         menus.Add("main", main);
 
-        main.addText(tr.ui.main.terminalWelcome);
-        main.addSpace();
-        main.addText(tr.ui.main.selectEntries);
         main.addSeparator("-");
         main.addSpace();
-        main.addButton("1) " + tr.ui.main.emails_btn, () => MenuManager.instance.switchMenu("mail"));
-        main.addButton("2) " + tr.ui.main.logs_btn, () => MenuManager.instance.switchMenu("logs"));
-        main.addButton("0) " + tr.ui.main.exit_btn, () => MenuManager.instance.exit());
+        main.addText(getPhrase("main.terminalWelcome"));
+        main.addSpace();
+        main.addText(getPhrase("main.selectEntries"));
+        main.addSeparator("-");
+        main.addButton("1) " + getPhrase("main.emails_btn"), () => MenuManager.instance.switchMenu("mail"));
+        main.addButton("2) " + getPhrase("main.logs_btn"), () => MenuManager.instance.switchMenu("logs"));
+        main.addButton("0) " + getPhrase("main.exit_btn"), () => MenuManager.instance.exit());
 
 
-        if (initMenus) // only first time calling function
+        /*if (initMenus) // only first time calling function
         {
             //  **  Language selection   ** //
             Menu langSelect = new Menu(menuRenderer);
@@ -60,17 +63,17 @@ public class MenuManager : MonoBehaviour
             }
 
             initMenus = false;
-        }
+        }*/
 
         //  **  MAIL    **  //
         Menu mail = new Menu(menuRenderer);
         menus.Add("mail", mail);
 
-        mail.addText(tr.ui.mail.header);
+        mail.addText(getPhrase("mail.header"));
         mail.addSeparator("-");
-        mail.addText(string.Format(tr.ui.mail.mailCounter, 0));
+        mail.addText(string.Format(getPhrase("mail.mailCounter"), 0));
         mail.addSpace();
-        mail.addButton("0) " + tr.ui.button_back, () => MenuManager.instance.back());
+        mail.addButton("0) " + getPhrase("button_back"), () => MenuManager.instance.back());
 
         //  **  Logs    **  //
         Menu logs = new Menu(menuRenderer);
@@ -78,7 +81,7 @@ public class MenuManager : MonoBehaviour
 
         // loading logs itselves        
 
-        logs.addText(tr.ui.logs.header);
+        logs.addText(getPhrase("logs.header"));
         logs.addSeparator("-");
 
         // creating log menus
@@ -90,7 +93,7 @@ public class MenuManager : MonoBehaviour
             Menu log = menus[key];
             log.addText(doc.value);
             log.addSeparator("-");
-            log.addButton("0) " + tr.ui.button_back, () => MenuManager.instance.back());
+            log.addButton("0) " + getPhrase("button_back"), () => MenuManager.instance.back());
 
             // add link to logs menu
             Debug.Log(key);
@@ -101,7 +104,7 @@ public class MenuManager : MonoBehaviour
         //
 
         logs.addSpace();
-        logs.addButton("0) " + tr.ui.button_back, () => MenuManager.instance.back());
+        logs.addButton("0) " + getPhrase("button_back"), () => MenuManager.instance.back());
     }
     public void Awake()
     {
@@ -110,10 +113,17 @@ public class MenuManager : MonoBehaviour
             instance = this;
         else
             Destroy(this);
+        menuRenderer = gameObject.GetComponent<TerminalRenderer>();
 
         //  reloading entries
         MenuManager.instance.data.updateEntries();
+    }
+
+    public void Start()
+    {
         generateMenus();
+        currentMenu = menus["main"];
+        currentMenu.Render();
     }
 
     public void Update()
@@ -121,7 +131,6 @@ public class MenuManager : MonoBehaviour
         currentMenu = menus["main"];
         if (menuStack.Count > 0)
             currentMenu = menus[menuStack[menuStack.Count - 1]];
-        currentMenu.Render();
 
         if (Input.GetButtonDown("Up"))
         {
@@ -185,6 +194,11 @@ public class Menu
         selectedItemPos = -1;
     }
 
+    void updateMenu()
+    {
+        this.Render();
+    }
+
     public void down()
     {
         int offset = 1;
@@ -197,6 +211,7 @@ public class Menu
             selectedItemPos = (selectedItemPos + offset) % menuItems.Count;
             selectedItem = menuItems[selectedItemPos];
         }
+        updateMenu();
     }
 
     static int mod(int x, int m)
@@ -216,6 +231,7 @@ public class Menu
             selectedItemPos = mod(selectedItemPos - offset, menuItems.Count);
             selectedItem = menuItems[selectedItemPos];
         }
+        updateMenu();
     }
 
     public void submit()
@@ -229,6 +245,7 @@ public class Menu
         {
             MenuManager.instance.back();
         }
+        updateMenu();
     }
     public void addText(string text)
     {

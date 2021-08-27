@@ -35,8 +35,6 @@ public class TerminalData : ScriptableObject
     [NonSerialized]
     public string newLine = "\n";
 
-    public TranslationData translationData;
-
     public void OnValidate()
     {
         _maxLength = MaxLineLength - PaddingH*2;
@@ -53,20 +51,15 @@ public class TerminalData : ScriptableObject
 
         public string displayName
         {
-            get { return entry.title[TranslationData.currentLanguage];}
+            get { return "NAME";}
         }
 
         public string value
         {
-            get { return entry.text[TranslationData.currentLanguage];}
+            get { return "VALUE";}
         }
     }
 
-    public void setLanguage(TranslationData.Language lang)
-    {
-        TranslationData.currentLanguage = lang;
-        updateEntries();
-    }
     public void updateEntries()
     {
         //load files
