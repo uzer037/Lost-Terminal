@@ -145,7 +145,7 @@ public class TerminalRenderer : MonoBehaviour
     }
     public void RedrawScreen()
     {
-        tmesh.text = "";
+        string text = "";
         for(int i = 0; i < data.MaxLineCount; i++)
         {
             for(int j = 0; j < data.MaxLineLength; j++)
@@ -162,19 +162,21 @@ public class TerminalRenderer : MonoBehaviour
                             closingTags = closingTags + tag.closing;
                     }
                 }
-                tmesh.text += openTags;
+                text += openTags;
                 if(screen[i,j] == 0 || screen[i,j] == ' ' || screen[i,j] == '\n')
                 {
-                    tmesh.text += data.noBreak;
+                    text += data.noBreak;
                 }
                 else
                 {
-                    tmesh.text += screen[i,j];
+                    text += screen[i,j];
                 }
-                tmesh.text += closingTags;
+                text += closingTags;
             }
-            tmesh.text += data.newLine;
+            text += data.newLine;
         }
+
+        tmesh.text = text;
     }
 
     public string toHex(Color c)

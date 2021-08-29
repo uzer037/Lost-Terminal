@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 
 [RequireComponent(typeof(TerminalRenderer))]
 public class MenuManager : MonoBehaviour
@@ -18,7 +19,15 @@ public class MenuManager : MonoBehaviour
     List<Entry> entries;
 
     bool initMenus = true;
+    int incorrectPasswordInput = 0;
+    int incorrectPasswordInputLimit = 3;
 
+
+    /*==========================================*
+    *                                          *
+    *      START OF MENU LAYOUT SECTION        *
+    *                                          *
+    * =========================================*/
     public void generateMenus()
     {
         //  *   MENUS   *   //
@@ -43,8 +52,9 @@ public class MenuManager : MonoBehaviour
         main.addButton("0) " + getPhrase("main.exit_btn") + ".", () => MenuManager.instance.exit());
 
 
-        /*if (initMenus) // only first time calling function
+        if (initMenus) // only first time calling function
         {
+            /*
             //  **  Language selection   ** //
             Menu langSelect = new Menu(menuRenderer);
             menus.Add("langSelect", langSelect);
@@ -63,9 +73,56 @@ public class MenuManager : MonoBehaviour
                     generateMenus();
                 });
             }
+            */
+
+            //  **  Login   **  //
+            Menu loginMenu = new Menu(menuRenderer);
+            menus.Add("loginMenu", loginMenu);
+            menuStack.Add("loginMenu");
+
+            // building loginMenu
+            void rebuildLoginMenu()
+            {
+                loginMenu.clearLayout();
+                loginMenu.addSpace();
+                loginMenu.addText(getPhrase("login.title"));
+                switch(incorrectPasswordInput)
+                {
+                    case 0:
+                        {
+                            loginMenu.addSpace();
+                            break;
+                        }
+                    default:
+                        {
+                            loginMenu.addText(string.Format(getPhrase("login.incorrectPass"), incorrectPasswordInputLimit - incorrectPasswordInput));
+                            break;
+                        }
+                }
+                loginMenu.addSpace();
+                loginMenu.addText(getPhrase("login.prompt"));
+                loginMenu.addSpace();
+                loginMenu.addText(getPhrase("login.username"));
+                string correctPassword = "projectmadmen";
+                //set max password length as 16 cuz it's looking better
+                loginMenu.addPasswordField(16, correctPassword, () =>
+                    {
+                        Debug.Log("Password is correct");
+                        MenuManager.instance.menustack_pop();
+                    },
+                    () =>
+                    {
+                        Debug.Log("Password is wrong");
+                        incorrectPasswordInput++;
+                        rebuildLoginMenu();
+                    });
+                RedrawTopMenu();
+            }
+
+            rebuildLoginMenu();
 
             initMenus = false;
-        }*/
+        }
 
         //  **  MAIL    **  //
         Menu mail = new Menu(menuRenderer);
@@ -75,7 +132,7 @@ public class MenuManager : MonoBehaviour
         mail.addSeparator("-");
         mail.addText(string.Format(getPhrase("mail.mailCounter"), 0));
         mail.addSpace();
-        mail.addButton("0) " + getPhrase("button_back"), () => MenuManager.instance.back());
+        mail.addButton("0) " + getPhrase("button_back"), () => MenuManager.instance.menustack_pop());
 
         //  **  Logs    **  //
         Menu logs = new Menu(menuRenderer);
@@ -103,7 +160,7 @@ public class MenuManager : MonoBehaviour
             Menu log = menus[key];
             log.addText(ent.value);
             log.addSeparator("-");
-            log.addButton("0) " + getPhrase("button_back"), () => MenuManager.instance.back());
+            log.addButton("0) " + getPhrase("button_back"), () => MenuManager.instance.menustack_pop());
 
             // add link to logs menu
             Debug.Log(key);
@@ -113,8 +170,16 @@ public class MenuManager : MonoBehaviour
         }
         
         logs.addSpace();
-        logs.addButton("0) " + getPhrase("button_back"), () => MenuManager.instance.back());
+        logs.addButton("0) " + getPhrase("button_back"), () => MenuManager.instance.menustack_pop());
+
+        currentMenu = menus[menuStack[menuStack.Count - 1]];
     }
+
+    /*==========================================*
+     *                                          *
+     *      END OF MENU LAYOUT SECTION          *
+     *                                          *
+     * =========================================*/
     public void Awake()
     {
         //making manager singleton
@@ -123,23 +188,17 @@ public class MenuManager : MonoBehaviour
         else
             Destroy(this);
         menuRenderer = gameObject.GetComponent<TerminalRenderer>();
-
-        //  reloading entries
-        MenuManager.instance.data.updateEntries();
     }
 
     public void Start()
     {
         generateMenus();
-        currentMenu = menus["main"];
         currentMenu.Render();
     }
 
     public void Update()
     {
-        currentMenu = menus["main"];
-        if (menuStack.Count > 0)
-            currentMenu = menus[menuStack[menuStack.Count - 1]];
+        currentMenu = menus[menuStack[menuStack.Count - 1]];
 
         if (Input.GetButtonDown("Up"))
         {
@@ -155,6 +214,14 @@ public class MenuManager : MonoBehaviour
         {
             currentMenu.submit();
         }
+
+        if(Input.inputString != "")
+        {
+            if(currentMenu.isOverInputField())
+            {
+                currentMenu.input(Input.inputString);
+            }
+        }
     }
 
     public void switchMenu(string menuName)
@@ -165,12 +232,14 @@ public class MenuManager : MonoBehaviour
             Debug.LogError("No menu named \"" + menuName + "\"");
     }
 
-    public void back()
+    public void menustack_pop()
     {
         if (menuStack.Count > 1)
         {
             Debug.Log("Changed menu: " + menuStack[menuStack.Count - 1] + " -> " + menuStack[menuStack.Count - 2]);
             menuStack.RemoveAt(menuStack.Count - 1);
+            currentMenu = menus[menuStack[menuStack.Count - 1]];
+            RedrawTopMenu();
         }
     }
 
@@ -184,6 +253,11 @@ public class MenuManager : MonoBehaviour
         menuStack = new List<string>();
         menuStack.Add("main");
         Debug.Log("Exited App");
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.ExitPlaymode();
+#else
+        Application.Quit();
+#endif
     }
 }
 
@@ -208,6 +282,37 @@ public class Menu
         selectedItemPos = -1;
     }
 
+    public bool isOverInputField()
+    {
+        return selectedItem is MenuInputField;
+    }
+
+    public void input(string input)
+    {
+        MenuInputField field = selectedItem as MenuInputField;
+        if(field != null)
+        {
+            string str = field.unformattedText + input;
+            int pos = str.IndexOf('\b');
+            while( pos != -1 )
+            {
+                if(pos > 0)
+                    str = str.Remove(pos - 1, 2);
+                else
+                    str = str.Remove(pos, 1);
+                pos = str.IndexOf('\b');
+            }
+            field.unformattedText = str.Substring(0,Mathf.Min(str.Length, field.length));
+            if(field.isObfuscated)
+                field.text = new string(field.obfuscationSymbol, field.unformattedText.Length);
+            else
+                field.text = field.unformattedText;
+            if (field.text.Length < field.length)
+                field.text += new string('_', field.length - field.text.Length);
+        }
+        updateMenu();
+    }
+
     void updateMenu()
     {
         MenuManager.instance.RedrawTopMenu();
@@ -216,11 +321,12 @@ public class Menu
     public void down()
     {
         int offset = 1;
-        while (menuItems[(selectedItemPos + offset) % menuItems.Count].type != MI_TYPE.button && offset <= menuItems.Count)
+        while( !(menuItems[(selectedItemPos + offset) % menuItems.Count] is MenuInteractibleItem) && offset <= menuItems.Count)
         {
+            Debug.Log(offset);
             offset++;
         }
-        if (menuItems[(selectedItemPos + offset) % menuItems.Count].type == MI_TYPE.button)
+        if (menuItems[(selectedItemPos + offset) % menuItems.Count] is MenuInteractibleItem)
         {
             selectedItemPos = (selectedItemPos + offset) % menuItems.Count;
             selectedItem = menuItems[selectedItemPos];
@@ -236,11 +342,12 @@ public class Menu
     public void up()
     {
         int offset = 1;
-        while (menuItems[mod(selectedItemPos - offset, menuItems.Count)].type != MI_TYPE.button && offset <= menuItems.Count)
+        while( !(menuItems[mod(selectedItemPos - offset, menuItems.Count)] is MenuInteractibleItem) && offset <= menuItems.Count)
         {
             offset++;
         }
-        if (menuItems[mod(selectedItemPos - offset, menuItems.Count)].type == MI_TYPE.button)
+
+        if (menuItems[mod(selectedItemPos - offset, menuItems.Count)] is MenuInteractibleItem)
         {
             selectedItemPos = mod(selectedItemPos - offset, menuItems.Count);
             selectedItem = menuItems[selectedItemPos];
@@ -252,14 +359,22 @@ public class Menu
     {
         if (selectedItem != null)
         {
-            if (selectedItem.type == MI_TYPE.button)
-                ((MenuButton)(selectedItem)).onClick();
+            if (selectedItem is MenuInteractibleItem)
+                ((MenuInteractibleItem)(selectedItem)).onClick();
         }
         else
         {
-            MenuManager.instance.back();
+            MenuManager.instance.menustack_pop();
         }
         updateMenu();
+    }
+
+    public void clearLayout()
+    {
+        id = 0;
+        selectedItem = null;
+        selectedItemPos = -1;
+        menuItems.Clear();
     }
     public void addText(string text)
     {
@@ -276,7 +391,29 @@ public class Menu
 
         for (int i = 0; selectedItem == null && i < menuItems.Count; i++)
         {
-            if (menuItems[i].type == MI_TYPE.button)
+            if (menuItems[i] is MenuButton)
+            {
+                selectedItem = menuItems[i];
+                selectedItemPos = i;
+            }
+        }
+    }
+    public void addPasswordField(int length, string correctPassword, Action funcOnValid, Action funcOnInvalid, char obfuscationSymbol = '*')
+    {
+        MenuPasswordField field = new MenuPasswordField(id, length, correctPassword, funcOnValid, funcOnInvalid, obfuscationSymbol: obfuscationSymbol);
+        if (field.isObfuscated)
+            field.text = new string(field.obfuscationSymbol, field.unformattedText.Length);
+        else
+            field.text = field.unformattedText;
+        if (field.text.Length < field.length)
+            field.text += new string('_', field.length - field.text.Length);
+        menuItems.Add(field);
+
+        id++;
+
+        for (int i = 0; selectedItem == null && i < menuItems.Count; i++)
+        {
+            if (menuItems[i] is MenuInputField)
             {
                 selectedItem = menuItems[i];
                 selectedItemPos = i;
@@ -312,17 +449,10 @@ public class Menu
     }
 }
 
-// TODO : Image viewer
-/*public class EntryViewer : Menu
-{
-    public EntryViewer(TerminalRenderer renderer, string entry) : base(renderer){}
-}*/
-
-public enum MI_TYPE { separator, text, button, image };
+// ** Menu **
 
 public abstract class MenuItem
 {
-    public MI_TYPE type;
     public string text;
     public int id;
     public MenuItem(int id, string text)
@@ -336,17 +466,65 @@ public abstract class MenuItem
         this.text = "";
     }
 }
-public class MenuButton : MenuItem
+
+public abstract class MenuInteractibleItem : MenuItem
 {
-    public MenuButton(int id, string text, Action func) : base(id, text) { type = MI_TYPE.button; onClick += func; }
+    public MenuInteractibleItem(int id, string text, Action func) : base(id, text)
+    {
+        onClick += func;
+    }
     public Action onClick;
+}
+public class MenuButton : MenuInteractibleItem
+{
+    public MenuButton(int id, string text, Action func) : base(id, text, func) { }
+    
+}
+public abstract class MenuInputField : MenuInteractibleItem
+{
+    public int length;
+    public string unformattedText;
+    public bool isObfuscated;
+    public char obfuscationSymbol;
+    public MenuInputField(int id, int length, Action func, bool isObfuscated = false, char obfuscationSymbol = '*') : base(id, "", ()=> { })
+    {
+        this.length = length;
+        this.isObfuscated = isObfuscated;
+        this.obfuscationSymbol = obfuscationSymbol;
+        unformattedText = "";
+    }
+}
+
+public class MenuPasswordField : MenuInputField
+{
+    string correctPassword;
+    Action onValid;
+    Action onInvalid;
+    void Validate(string password)
+    {
+        if(password == correctPassword)
+        {
+            onValid();
+        }
+        else
+        {
+            onInvalid();
+        }
+    }
+    public MenuPasswordField(int id, int length, string correctPassword, Action funcOnValid, Action funcOnInvalid, char obfuscationSymbol = '*') : base(id, length, () => { }, isObfuscated: true, obfuscationSymbol: obfuscationSymbol)
+    {
+        this.correctPassword = correctPassword;
+        onClick += () => Validate(unformattedText);
+        onValid += funcOnValid;
+        onInvalid += funcOnInvalid;
+    }
 }
 public class MenuText : MenuItem
 {
-    public MenuText(int id, string text) : base(id, text) { type = MI_TYPE.text; }
+    public MenuText(int id, string text) : base(id, text) { }
 }
 
 public class MenuSeparator : MenuItem
 {
-    public MenuSeparator(int id, string text) : base(id, text) { type = MI_TYPE.separator; }
+    public MenuSeparator(int id, string text) : base(id, text) { }
 }
